@@ -2,132 +2,34 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FIREBOX | PREMIUM STORE</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Мой Магазин</title>
     <style>
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #ff0000; border-radius: 10px; }
-        
-        .video-bg {
-            position: fixed; right: 0; bottom: 0;
-            min-width: 100%; min-height: 100%;
-            z-index: -1; opacity: 0.3; object-fit: cover;
-        }
-
-        .glass { background: rgba(15, 15, 15, 0.8); backdrop-blur: 12px; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .product-card { animation: fadeIn 0.5s ease forwards; }
+        body { font-family: sans-serif; text-align: center; background: #f4f4f4; }
+        .product-card { background: white; padding: 20px; margin: 10px; display: inline-block; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        img { max-width: 200px; border-radius: 5px; }
+        button { background: #28a745; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
     </style>
 </head>
-<body class="bg-black text-white font-sans antialiased">
+<body>
 
-    <video autoplay muted loop class="video-bg">
-        <source src="bg.mp4" type="video/mp4">
-    </video>
+    <img src="santa.png" alt="Логотип" style="width: 150px; margin-top: 20px;">
+    <h1>Добро пожаловать в мой магазин!</h1>
 
-    <header class="sticky top-0 z-50 glass border-b border-zinc-800">
-        <div class="max-w-[1400px] mx-auto px-4 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <img src="santa.png" alt="Firebox Logo" class="h-12 w-auto">
-                <div class="h-8 w-[1px] bg-zinc-700 hidden sm:block"></div>
-                <h1 class="text-xl font-black tracking-tighter uppercase hidden sm:block">Firebox <span class="text-red-600">Store</span></h1>
-            </div>
-            <div id="product-counter" class="text-[10px] font-mono bg-zinc-800 px-3 py-1 rounded-full text-zinc-400">
-                ЗАГРУЗКА...
-            </div>
+    <div id="catalog">
+        <div class="product-card">
+            <img src="https://via.placeholder.com/150" alt="Товар">
+            <h3>Тестовый товар 1</h3>
+            <p>Цена: 1000 руб.</p>
+            <button>Купить</button>
         </div>
-    </header>
-
-    <main class="max-w-[1400px] mx-auto flex flex-col md:flex-row min-h-screen">
-        <aside class="w-full md:w-64 p-6 border-r border-zinc-900 glass">
-            <h2 class="text-zinc-500 text-[10px] uppercase tracking-widest mb-6 font-bold">Категории</h2>
-            <div id="sidebar-filters" class="flex flex-row md:flex-col gap-2 overflow-x-auto no-scrollbar pb-4">
-                </div>
-        </aside>
-
-        <div class="flex-1 p-6">
-            <div id="product-grid" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                </div>
-        </div>
-    </main>
-
-    <script>
-        const API_URL = 'https://fireboxstore.ru/link/b2427725d518f7884093a2a43dd8702bae53552b.xml';
-        const PROXY_URL = 'https://api.allorigins.win/get?url=';
-        const IMG_PROXY = 'https://images.weserv.nl/?url=';
         
-        let allProducts = [];
+        <div class="product-card">
+            <img src="https://via.placeholder.com/150" alt="Товар">
+            <h3>Тестовый товар 2</h3>
+            <p>Цена: 2500 руб.</p>
+            <button>Купить</button>
+        </div>
+    </div>
 
-        async function init() {
-            try {
-                const res = await fetch(PROXY_URL + encodeURIComponent(API_URL));
-                const data = await res.json();
-                const xml = new DOMParser().parseFromString(data.contents, "text/xml");
-                const offers = Array.from(xml.getElementsByTagName('offer'));
-
-                allProducts = offers.map(off => ({
-                    name: off.getElementsByTagName('name')[0]?.textContent,
-                    price: off.getElementsByTagName('price')[0]?.textContent,
-                    vendor: off.getElementsByTagName('vendor')[0]?.textContent,
-                    img: off.getElementsByTagName('picture')[0]?.textContent
-                })).filter(p => p.img && p.name);
-
-                renderBrands([...new Set(allProducts.map(p => p.vendor))]);
-                renderProducts(allProducts);
-                document.getElementById('product-counter').innerText = `${allProducts.length} МОДЕЛЕЙ`;
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById('product-grid').innerHTML = "Ошибка загрузки данных.";
-            }
-        }
-
-        function renderBrands(brands) {
-            const container = document.getElementById('sidebar-filters');
-            container.innerHTML = `<button onclick="filterBrand('all')" class="w-full text-left px-4 py-2 rounded-xl bg-red-600 text-sm font-bold">Все бренды</button>`;
-            brands.sort().forEach(b => {
-                if(!b) return;
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left px-4 py-2 rounded-xl hover:bg-zinc-800 text-zinc-400 text-sm transition transition-all whitespace-nowrap";
-                btn.innerText = b;
-                btn.onclick = () => filterBrand(b, btn);
-                container.appendChild(btn);
-            });
-        }
-
-        function renderProducts(list) {
-            const grid = document.getElementById('product-grid');
-            grid.innerHTML = list.map(p => `
-                <div class="product-card bg-zinc-900/40 border border-zinc-800 rounded-[24px] overflow-hidden hover:border-red-600/50 transition-all group">
-                    <div class="bg-white aspect-square p-4 overflow-hidden">
-                        <img src="${IMG_PROXY}${p.img.replace('https://', '')}&w=500&h=500&fit=contain" 
-                             class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" loading="lazy">
-                    </div>
-                    <div class="p-5">
-                        <div class="text-red-600 font-black text-2xl mb-1">${parseInt(p.price).toLocaleString()} ₽</div>
-                        <div class="text-[10px] text-zinc-500 uppercase font-bold mb-2">${p.vendor}</div>
-                        <h3 class="text-xs font-medium text-zinc-200 h-8 overflow-hidden mb-5 leading-tight">${p.name}</h3>
-                        <a href="https://wa.me/79647373246?text=Заказ: ${encodeURIComponent(p.name)}" 
-                           class="block w-full bg-white text-black text-center py-3 rounded-xl font-black text-[10px] uppercase hover:bg-red-600 hover:text-white transition-colors">
-                            Купить
-                        </a>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function filterBrand(brand, btn) {
-            const filtered = brand === 'all' ? allProducts : allProducts.filter(p => p.vendor === brand);
-            renderProducts(filtered);
-            document.querySelectorAll('#sidebar-filters button').forEach(b => b.classList.remove('bg-red-600', 'text-white'));
-            if(btn) btn.classList.add('bg-red-600', 'text-white');
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
-
-        init();
-    </script>
 </body>
 </html>

@@ -1,79 +1,163 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGSHOP138 | Магазин</title>
-    <style>
-        :root { --main-color: #ff4444; --bg-dark: #0a0a0a; --card-bg: #141414; }
-        body { background: var(--bg-dark); color: #fff; font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; }
-        .header { text-align: center; padding: 40px 20px; border-bottom: 1px solid #222; }
-        .logo { width: 100px; margin-bottom: 15px; filter: drop-shadow(0 0 10px var(--main-color)); }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px; }
-        .card { background: var(--card-bg); border: 1px solid #222; border-radius: 15px; padding: 20px; transition: 0.3s; display: flex; flex-direction: column; }
-        .card:hover { transform: translateY(-5px); border-color: var(--main-color); box-shadow: 0 10px 20px rgba(255, 68, 68, 0.1); }
-        .card img { width: 100%; height: 200px; object-fit: contain; border-radius: 10px; margin-bottom: 15px; background: #000; }
-        .card h3 { font-size: 16px; margin: 0 0 15px; height: 40px; overflow: hidden; color: #e0e0e0; }
-        .price { font-size: 22px; font-weight: bold; color: var(--main-color); margin-bottom: 20px; }
-        .buy-btn { background: var(--main-color); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
-        .buy-btn:hover { background: #cc0000; }
-        #loader { text-align: center; padding: 100px; font-size: 20px; color: var(--main-color); }
-    </style>
+<meta charset="UTF-8">
+<title>FireBox Store</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #000000;
+  --red: #ff0000;
+  --text: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #222;
+}
+
+header img {
+  height: 50px;
+}
+
+main {
+  padding: 30px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: #0d0d0d;
+  border: 1px solid #1a1a1a;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  transition: transform .2s, border .2s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--red);
+}
+
+.card img {
+  width: 100%;
+  height: 220px;
+  object-fit: contain;
+  background: #000;
+  margin-bottom: 10px;
+}
+
+.card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  min-height: 40px;
+}
+
+.price {
+  color: var(--red);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.card a {
+  margin-top: auto;
+  text-align: center;
+  padding: 10px;
+  background: var(--red);
+  color: #000;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.loader {
+  text-align: center;
+  padding: 30px;
+  opacity: .6;
+}
+</style>
 </head>
+
 <body>
 
-<div class="header">
-    <img src="santa.png" alt="Logo" class="logo">
-    <h1>SGSHOP138</h1>
-</div>
+<header>
+  <img src="santa.png" alt="Logo">
+</header>
 
-<div class="container">
-    <div id="loader">Загрузка товаров...</div>
-    <div class="grid" id="catalog"></div>
-</div>
+<main>
+  <div id="products" class="grid"></div>
+  <div id="loader" class="loader">Загрузка…</div>
+</main>
 
 <script>
-    const XML_URL = 'https://fireboxstore.ru/link/b2427725d518f7884093a2a43dd8702bae53552b.xml';
-    // Прокси для обхода CORS
-    const PROXY = 'https://api.allorigins.win/raw?url=';
+let page = 1;
+const limit = 24;
+let loading = false;
+let end = false;
 
-    async function loadStore() {
-        try {
-            const response = await fetch(PROXY + encodeURIComponent(XML_URL));
-            const xmlText = await response.text();
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-            
-            const offers = xmlDoc.querySelectorAll('offer');
-            const catalog = document.getElementById('catalog');
-            const loader = document.getElementById('loader');
-            
-            loader.style.display = 'none';
+async function loadProducts() {
+  if (loading || end) return;
+  loading = true;
 
-            offers.forEach(offer => {
-                const name = offer.querySelector('name').textContent;
-                const price = offer.querySelector('price').textContent;
-                const picture = offer.querySelector('picture').textContent;
-                const url = offer.querySelector('url')?.textContent || '#';
+  const res = await fetch(`/.netlify/functions/products?page=${page}&limit=${limit}`);
+  const data = await res.json();
 
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <img src="${picture}" alt="${name}">
-                    <h3>${name}</h3>
-                    <div class="price">${price} ₽</div>
-                    <button class="buy-btn" onclick="window.open('${url}', '_blank')">Купить</button>
-                `;
-                catalog.appendChild(card);
-            });
-        } catch (e) {
-            document.getElementById('loader').innerText = "Ошибка загрузки данных. Попробуйте обновить страницу.";
-            console.error(e);
-        }
-    }
+  if (!data.length) {
+    end = true;
+    document.getElementById('loader').innerText = 'Товары закончились';
+    return;
+  }
 
-    loadStore();
+  const container = document.getElementById('products');
+
+  data.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    card.innerHTML = `
+      <img src="${p.image}" loading="lazy">
+      <h3>${p.name}</h3>
+      <div class="price">${p.price} ₽</div>
+      <a href="${p.url}" target="_blank">Купить</a>
+    `;
+
+    container.appendChild(card);
+  });
+
+  page++;
+  loading = false;
+}
+
+window.addEventListener('scroll', () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+    loadProducts();
+  }
+});
+
+loadProducts();
 </script>
 
 </body>
